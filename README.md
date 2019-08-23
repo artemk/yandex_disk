@@ -1,7 +1,7 @@
 You should register your app to obtain ID and Password.
 
 ## Usage
-Take a look at hex docs for examples.
+Take a look at [hex docs](https://hexdocs.pm/yandex_disk/api-reference.html) for examples.
 
 ```
 client = YandexDisk.Client.client(TOKEN)   

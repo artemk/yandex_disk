@@ -19,10 +19,11 @@ defmodule YandexDisk.PublicFile do
          }
        ]}
   See: 
-    * https://yandex.ru/dev/disk/api/reference/recent-public-docpage/
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/recent-public-docpage/)
   """
 
-  @spec index(YandexDisk.client(), Keyword.t()) :: {:ok, offset :: integer, list} | YandexDisk.error_result()
+  @spec index(YandexDisk.client(), Keyword.t()) ::
+          {:ok, offset :: integer, list} | YandexDisk.error_result()
   def index(client, args \\ []) do
     offset = Keyword.get(args, :offset, 0)
     query = Keyword.merge([type: "file"], args)
@@ -32,6 +33,7 @@ defmodule YandexDisk.PublicFile do
     case body do
       %{"error" => error, "description" => description} ->
         {:error, error, description}
+
       %{"items" => items} ->
         {:ok, offset, items}
     end
@@ -45,26 +47,30 @@ defmodule YandexDisk.PublicFile do
 
     iex> {:ok, %{"public_url" => public_url}} = 
       YandexDisk.PublicFile.metadata(client, yandex_path: yandex_path, fields: "public_url")
-    {:ok, %{"public_url" => "https://yadi.sk/i/OZ9eUNjLMZKlmA"}}
-  
+    { :ok, %{"public_url" => "https://yadi.sk/i/OZ9eUNjLMZKlmA"} }
+
     iex> public_url
     "https://yadi.sk/i/OZ9eUNjLMZKlmA"
   See: 
-    * https://yandex.ru/dev/disk/api/reference/publish-docpage/#publish
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/publish-docpage/#publish)
   """
-  @spec create(YandexDisk.client(), Keyword.t()) :: YandexDisk.success_result_url() | YandexDisk.error_result()
+  @spec create(YandexDisk.client(), Keyword.t()) ::
+          YandexDisk.success_result_url() | YandexDisk.error_result()
   def create(client, args) do
-    {path, args}  = Keyword.pop(args, :yandex_path)
-    query         = Keyword.merge(args, [path: path])
+    {path, args} = Keyword.pop(args, :yandex_path)
+    query = Keyword.merge(args, path: path)
 
-    {:ok, %Tesla.Env{body: body}} = Tesla.put(client, "/disk/resources/publish", nil, query: query)
+    {:ok, %Tesla.Env{body: body}} =
+      Tesla.put(client, "/disk/resources/publish", nil, query: query)
+
     case body do
       %{"error" => error, "description" => description} ->
         {:error, error, description}
+
       %{"href" => href} ->
         {:ok, href}
     end
-  end 
+  end
 
   @doc """
     Get metainfo about public file
@@ -77,17 +83,20 @@ defmodule YandexDisk.PublicFile do
        iex> YandexDisk.PublicFile.metadata(client, public_key: "UloX3BvWzrrNDhOOy9G1JXxPdr+Di7EzKRQ2PX3", yandex_path: "erere", fields: "md5")
        { :error, "DiskNotFoundError", "Resource not found." }
   See: 
-    * https://yandex.ru/dev/disk/api/reference/public-docpage/#meta
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/public-docpage/#meta)
   """
-  @spec metadata(YandexDisk.client(), Keyword.t()) :: {:ok, YandexDisk.info} | YandexDisk.error_result()
+  @spec metadata(YandexDisk.client(), Keyword.t()) ::
+          {:ok, YandexDisk.info()} | YandexDisk.error_result()
   def metadata(client, args) do
-    {yandex_path, args}       = Keyword.pop(args, :yandex_path) 
+    {yandex_path, args} = Keyword.pop(args, :yandex_path)
 
-    query = Keyword.merge(args, [path: yandex_path])
+    query = Keyword.merge(args, path: yandex_path)
     {:ok, %Tesla.Env{body: body}} = Tesla.get(client, "/disk/public/resources", query: query)
+
     case body do
       %{"error" => error, "description" => description} ->
         {:error, error, description}
+
       info ->
         {:ok, info}
     end
@@ -101,17 +110,22 @@ defmodule YandexDisk.PublicFile do
         name: "nvr1.264")
       { :error, "MethodNotAllowedError", "Method Not Allowed" }
   See: 
-    * https://yandex.ru/dev/disk/api/reference/public-docpage/#save
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/public-docpage/#save)
   """
-  @spec save_to_downloads(YandexDisk.client(), Keyword.t()) :: {:ok, YandexDisk.info} | YandexDisk.error_result()
+  @spec save_to_downloads(YandexDisk.client(), Keyword.t()) ::
+          {:ok, YandexDisk.info()} | YandexDisk.error_result()
   def save_to_downloads(client, args) do
-    {yandex_path, args}       = Keyword.pop(args, :yandex_path) 
+    {yandex_path, args} = Keyword.pop(args, :yandex_path)
 
-    query = Keyword.merge(args, [path: yandex_path])
-    {:ok, %Tesla.Env{body: body}} = Tesla.post(client, "/disk/resources/download", %{}, query: query)
+    query = Keyword.merge(args, path: yandex_path)
+
+    {:ok, %Tesla.Env{body: body}} =
+      Tesla.post(client, "/disk/resources/download", %{}, query: query)
+
     case body do
       %{"error" => error, "description" => description} ->
         {:error, error, description}
+
       info ->
         {:ok, info}
     end
@@ -129,44 +143,52 @@ defmodule YandexDisk.PublicFile do
          "templated" => false
        }}
   See: 
-    * https://yandex.ru/dev/disk/api/reference/public-docpage/#download
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/public-docpage/#download)
   """
-  @spec download_url(YandexDisk.client(), Keyword.t()) :: {:ok, YandexDisk.info} | YandexDisk.error_result()
+  @spec download_url(YandexDisk.client(), Keyword.t()) ::
+          {:ok, YandexDisk.info()} | YandexDisk.error_result()
   def download_url(client, args) do
-    {yandex_path, args}       = Keyword.pop(args, :yandex_path) 
+    {yandex_path, args} = Keyword.pop(args, :yandex_path)
 
-    query = Keyword.merge(args, [path: yandex_path])
-    {:ok, %Tesla.Env{body: body}} = Tesla.get(client, "/disk/public/resources/download", query: query)
+    query = Keyword.merge(args, path: yandex_path)
+
+    {:ok, %Tesla.Env{body: body}} =
+      Tesla.get(client, "/disk/public/resources/download", query: query)
+
     case body do
       %{"error" => error, "description" => description} ->
         {:error, error, description}
+
       info ->
         {:ok, info}
     end
   end
-
 
   @doc """
     Remove public file. File itself remains on disk. 
   ## Examples
     iex> YandexDisk.PublicFile.destroy(client, yandex_path: "disk:/test/test11.mp4")
     { :ok,  "https://cloud-api.yandex.net/v1/disk/resources?path=disk%3A%2Ftest%2Ftest11.mp4" }
-  
+
     iex> {:ok, %{}} = YandexDisk.PublicFile.metadata(client, yandex_path: "disk:/test/test11.mp4", fields: "public_url")
   See: 
-    * https://yandex.ru/dev/disk/api/reference/publish-docpage/#unpublish-q
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/publish-docpage/#unpublish-q)
   """
-  @spec destroy(YandexDisk.client(), Keyword.t()) :: YandexDisk.success_result_url() | YandexDisk.error_result()
+  @spec destroy(YandexDisk.client(), Keyword.t()) ::
+          YandexDisk.success_result_url() | YandexDisk.error_result()
   def destroy(client, args) do
-    {path, args}  = Keyword.pop(args, :yandex_path)
-    query         = Keyword.merge(args, [path: path])
+    {path, args} = Keyword.pop(args, :yandex_path)
+    query = Keyword.merge(args, path: path)
 
-    {:ok, %Tesla.Env{body: body}} = Tesla.put(client, "/disk/resources/unpublish", nil, query: query)
+    {:ok, %Tesla.Env{body: body}} =
+      Tesla.put(client, "/disk/resources/unpublish", nil, query: query)
+
     case body do
       %{"error" => error, "description" => description} ->
         {:error, error, description}
+
       %{"href" => href} ->
         {:ok, href}
     end
-  end 
+  end
 end

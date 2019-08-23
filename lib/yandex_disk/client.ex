@@ -1,9 +1,8 @@
 defmodule YandexDisk.Client do
-
   @typedoc """
     Token returned in ouath flow
   """
-  @type token :: String.t
+  @type token :: String.t()
 
   @doc """
     Return client to use in all requests
@@ -13,7 +12,7 @@ defmodule YandexDisk.Client do
     middleware = [
       {Tesla.Middleware.BaseUrl, "https://cloud-api.yandex.net/v1"},
       Tesla.Middleware.JSON,
-      {Tesla.Middleware.Headers, [{"Authorization", "OAuth " <> token }]}
+      {Tesla.Middleware.Headers, [{"Authorization", "OAuth " <> token}]}
     ]
 
     Tesla.client(middleware)

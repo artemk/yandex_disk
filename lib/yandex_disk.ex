@@ -18,8 +18,7 @@ defmodule YandexDisk do
   @type info :: map
   @type disk_info :: map
 
-  @type error_result :: {:error, error_info, error_description} 
+  @type error_result :: {:error, error_info, error_description}
   @type success_result_url :: {:ok, url}
   @type success_result_info :: {:ok, info}
-
 end

@@ -1,7 +1,7 @@
 defmodule YandexDisk.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.1.1"
 
   def project do
     [
@@ -39,7 +39,7 @@ defmodule YandexDisk.MixProject do
   defp deps do
     [
       {:tesla, "~> 1.2.1"},
-      {:elixir_uuid, "~> 1.2" },
+      {:elixir_uuid, "~> 1.2"},
       {:jason, "~> 1.1"},
       {:httpoison, "~> 1.4"},
       {:downstream, "~> 1.0.0"},

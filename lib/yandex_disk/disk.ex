@@ -33,7 +33,7 @@ defmodule YandexDisk.Disk do
          }
        }}
   See: 
-    * https://yandex.ru/dev/disk/api/reference/capacity-docpage/
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/capacity-docpage/)
   """
   @spec about(YandexDisk.client()) :: {:ok, YandexDisk.disk_info()}
   def about(client) do
@@ -57,18 +57,21 @@ defmodule YandexDisk.Disk do
          "size" => 5437077
        }}
   See: 
-    * https://yandex.ru/dev/disk/api/reference/meta-docpage/
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/meta-docpage/)
   """
-  @spec metadata(YandexDisk.client(), Keyword.t()) :: {:ok, YandexDisk.info} | YandexDisk.error_result()
+  @spec metadata(YandexDisk.client(), Keyword.t()) ::
+          {:ok, YandexDisk.info()} | YandexDisk.error_result()
   def metadata(client, args \\ []) do
-    {yandex_path, args}       = Keyword.pop(args, :yandex_path) 
+    {yandex_path, args} = Keyword.pop(args, :yandex_path)
 
-    query = Keyword.merge(args, [path: yandex_path])
+    query = Keyword.merge(args, path: yandex_path)
     {:ok, %Tesla.Env{body: body}} = Tesla.get(client, "/disk/resources", query: query)
+
     case body do
       %{"error" => error, "description" => description} ->
         {:error, error, description}
-      info -> 
+
+      info ->
         {:ok, info}
     end
   end
@@ -79,18 +82,19 @@ defmodule YandexDisk.Disk do
       iex> YandexDisk.Disk.operation_status(client, "xxxxxx")
       {:ok, %{"status" => "in-progress"}}
   See: 
-    * https://yandex.ru/dev/disk/api/reference/operations-docpage/
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/operations-docpage/)
   """
-  @spec operation_status(YandexDisk.client(), String.t()) :: {:ok, YandexDisk.info} | YandexDisk.error_result()
+  @spec operation_status(YandexDisk.client(), String.t()) ::
+          {:ok, YandexDisk.info()} | YandexDisk.error_result()
   def operation_status(client, operation_id) do
     {:ok, %Tesla.Env{body: body}} = Tesla.get(client, "/disk/operations/#{operation_id}")
+
     case body do
       %{"error" => error, "description" => description} ->
         {:error, error, description}
-      info -> 
+
+      info ->
         {:ok, info}
     end
   end
-
-
 end

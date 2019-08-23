@@ -12,10 +12,11 @@ defmodule YandexDisk.File do
          %{"media_type" => "audio", "name" => "IM101"}
        ]}
   See: 
-    * https://yandex.ru/dev/disk/api/reference/all-files-docpage/
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/all-files-docpage/)
   """
 
-  @spec index(YandexDisk.client(), Keyword.t()) :: {:ok, offset :: integer, YandexDisk.info} | YandexDisk.error_result()
+  @spec index(YandexDisk.client(), Keyword.t()) ::
+          {:ok, offset :: integer, YandexDisk.info()} | YandexDisk.error_result()
   def index(client, args \\ []) do
     query = Keyword.merge([limit: 20], args)
 
@@ -24,6 +25,7 @@ defmodule YandexDisk.File do
     case body do
       %{"error" => error, "description" => description} ->
         {:error, error, description}
+
       %{"items" => items, "offset" => offset} ->
         {:ok, offset, items}
     end
@@ -52,21 +54,25 @@ defmodule YandexDisk.File do
            }
          ]}
   See: 
-    * https://yandex.ru/dev/disk/api/reference/recent-upload-docpage/
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/recent-upload-docpage/)
   """
 
-  @spec recent(YandexDisk.client(), Keyword.t()) :: {:ok, YandexDisk.info} | YandexDisk.error_result()
-  def recent(client, args  \\ []) do
+  @spec recent(YandexDisk.client(), Keyword.t()) ::
+          {:ok, YandexDisk.info()} | YandexDisk.error_result()
+  def recent(client, args \\ []) do
     query = Keyword.merge([limit: 20], args)
 
-    {:ok, %Tesla.Env{body: body}} = Tesla.get(client, "/disk/resources/last-uploaded", query: query)
+    {:ok, %Tesla.Env{body: body}} =
+      Tesla.get(client, "/disk/resources/last-uploaded", query: query)
+
     case body do
       %{"error" => error, "description" => description} ->
         {:error, error, description}
+
       %{"items" => items} ->
         {:ok, items}
     end
-  end 
+  end
 
   @doc """
     Upload file to yandex disk
@@ -91,18 +97,20 @@ defmodule YandexDisk.File do
          "templated" => false
        }}
   See: 
-    * https://yandex.ru/dev/disk/api/reference/upload-docpage/
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/upload-docpage/)
   """
-  @spec create(YandexDisk.client(), Keyword.t()) :: YandexDisk.success_result_info() | YandexDisk.error_result()
+  @spec create(YandexDisk.client(), Keyword.t()) ::
+          YandexDisk.success_result_info() | YandexDisk.error_result()
   def create(client, args) when not is_bitstring(args) do
-    {path, args}  = Keyword.pop(args, :yandex_path)
-    {file, args}  = Keyword.pop(args, :file)
+    {path, args} = Keyword.pop(args, :yandex_path)
+    {file, args} = Keyword.pop(args, :file)
 
-    query         = Keyword.merge(args, [path: path])
+    query = Keyword.merge(args, path: path)
 
     case obtain_upload_url(client, query) do
       {:error, error, description} ->
         {:error, error, description}
+
       {:ok, data} ->
         case create_request(data["href"], file) do
           {:ok} -> {:ok, data}
@@ -117,22 +125,28 @@ defmodule YandexDisk.File do
 
   defp create_request(upload_url, file) when is_bitstring(file) do
     file_stream = File.stream!(file, [], 2048)
-    case HTTPoison.request(:put, upload_url, {:stream, file_stream}, [], []) do
-      {:ok, %HTTPoison.Response{status_code: 201}} -> 
-        {:ok}
-      {:ok, %HTTPoison.Response{status_code: 202}} -> 
-        {:ok}
-      {:ok, %HTTPoison.Response{status_code: 412}} -> 
-        {:error, "Precondition Failed"}
-      {:ok, %HTTPoison.Response{status_code: 413}} -> 
-        {:error, "Payload Too Large"}
-      {:ok, %HTTPoison.Response{status_code: 500}} -> 
-        {:error, "Internal Server Error"}
-      {:ok, %HTTPoison.Response{status_code: 503}} -> 
-        {:error, "Service Unavailable"}
-      {:ok, %HTTPoison.Response{status_code: 507}} -> 
-        {:error, "Insufficient Storage"}
 
+    case HTTPoison.request(:put, upload_url, {:stream, file_stream}, [], []) do
+      {:ok, %HTTPoison.Response{status_code: 201}} ->
+        {:ok}
+
+      {:ok, %HTTPoison.Response{status_code: 202}} ->
+        {:ok}
+
+      {:ok, %HTTPoison.Response{status_code: 412}} ->
+        {:error, "Precondition Failed"}
+
+      {:ok, %HTTPoison.Response{status_code: 413}} ->
+        {:error, "Payload Too Large"}
+
+      {:ok, %HTTPoison.Response{status_code: 500}} ->
+        {:error, "Internal Server Error"}
+
+      {:ok, %HTTPoison.Response{status_code: 503}} ->
+        {:error, "Service Unavailable"}
+
+      {:ok, %HTTPoison.Response{status_code: 507}} ->
+        {:error, "Insufficient Storage"}
     end
   end
 
@@ -159,11 +173,11 @@ defmodule YandexDisk.File do
          "templated" => false
        }}
   See: 
-    * https://yandex.ru/dev/disk/api/reference/content-docpage/
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/content-docpage/)
   """
-  @spec get(YandexDisk.client(), [yandex_path: String.t, file: String.t]) :: {:ok}
+  @spec get(YandexDisk.client(), yandex_path: String.t(), file: String.t()) :: {:ok}
   def get(client, yandex_path: yandex_path, file: file) do
-    download_url = obtain_download_url(client, [path: yandex_path])
+    download_url = obtain_download_url(client, path: yandex_path)
     get(download_url: download_url, file: file)
   end
 
@@ -171,6 +185,7 @@ defmodule YandexDisk.File do
     File.open!(file_path, [:write], fn file ->
       Downstream.get(download_url, file)
     end)
+
     {:ok}
   end
 
@@ -187,18 +202,23 @@ defmodule YandexDisk.File do
        iex> YandexDisk.File.update(client, yandex_path: "disk:/test/not_existing.mp4", custom_properties: %{:foo => :bar})
        { :error, "DiskNotFoundError", "Resource not found." }
   See: 
-    * https://yandex.ru/dev/disk/api/reference/meta-add-docpage/
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/meta-add-docpage/)
   """
-  @spec update(YandexDisk.client(), Keyword.t()) :: {:ok, YandexDisk.info} | YandexDisk.error_result()
+  @spec update(YandexDisk.client(), Keyword.t()) ::
+          {:ok, YandexDisk.info()} | YandexDisk.error_result()
   def update(client, args) do
-    {yandex_path, args}       = Keyword.pop(args, :yandex_path) 
-    {custom_properties, args} = Keyword.pop(args, :custom_properties) 
+    {yandex_path, args} = Keyword.pop(args, :yandex_path)
+    {custom_properties, args} = Keyword.pop(args, :custom_properties)
 
-    query = Keyword.merge(args, [path: yandex_path])
-    {:ok, %Tesla.Env{body: body}} = Tesla.patch(client, "/disk/resources", %{custom_properties: custom_properties}, query: query)
+    query = Keyword.merge(args, path: yandex_path)
+
+    {:ok, %Tesla.Env{body: body}} =
+      Tesla.patch(client, "/disk/resources", %{custom_properties: custom_properties}, query: query)
+
     case body do
       %{"error" => error, "description" => description} ->
         {:error, error, description}
+
       info ->
         {:ok, info}
     end
@@ -228,17 +248,20 @@ defmodule YandexDisk.File do
            "templated" => false
          }}
   See: 
-    * https://yandex.ru/dev/disk/api/reference/copy-docpage/
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/copy-docpage/)
   """
-  @spec copy(YandexDisk.client(), Keyword.t()) :: {:ok, YandexDisk.info} | YandexDisk.error_result()
+  @spec copy(YandexDisk.client(), Keyword.t()) ::
+          {:ok, YandexDisk.info()} | YandexDisk.error_result()
   def copy(client, args) do
-    {yandex_path, args}       = Keyword.pop(args, :to) 
+    {yandex_path, args} = Keyword.pop(args, :to)
 
-    query = Keyword.merge(args, [path: yandex_path])
+    query = Keyword.merge(args, path: yandex_path)
     {:ok, %Tesla.Env{body: body}} = Tesla.post(client, "/disk/resources/copy", "", query: query)
+
     case body do
       %{"error" => error, "description" => description} ->
         {:error, error, description}
+
       info ->
         {:ok, info}
     end
@@ -251,7 +274,7 @@ defmodule YandexDisk.File do
       iex> YandexDisk.Folder.move(client, from: "disk:/test/test_folder4", to: "disk:/test/test_folder6")
       {:ok,
        %{
-         "href" => "https://cloud-api.yandex.net/v1/disk/operations/xxxxxxxxxx",
+         "href" => "https://cloud-api.yandex.net/v1/disk/operations/xxxxx",
          "method" => "GET",
          "templated" => false
        }}
@@ -259,17 +282,20 @@ defmodule YandexDisk.File do
        iex> YandexDisk.Folder.move(client, from: "disk:/test/test_folder4", to: "disk:/test/test_folder6")
        {:error, "DiskNotFoundError", "Resource not found."}
   See: 
-    * https://yandex.ru/dev/disk/api/reference/copy-docpage/
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/copy-docpage/)
   """
-  @spec move(YandexDisk.client(), Keyword.t()) :: {:ok, YandexDisk.info} | YandexDisk.error_result()
+  @spec move(YandexDisk.client(), Keyword.t()) ::
+          {:ok, YandexDisk.info()} | YandexDisk.error_result()
   def move(client, args) do
-    {yandex_path, args}       = Keyword.pop(args, :to) 
+    {yandex_path, args} = Keyword.pop(args, :to)
 
-    query = Keyword.merge(args, [path: yandex_path])
+    query = Keyword.merge(args, path: yandex_path)
     {:ok, %Tesla.Env{body: body}} = Tesla.post(client, "/disk/resources/move", "", query: query)
+
     case body do
       %{"error" => error, "description" => description} ->
         {:error, error, description}
+
       info ->
         {:ok, info}
     end
@@ -285,20 +311,24 @@ defmodule YandexDisk.File do
       iex> YandexDisk.File.destroy(client, yandex_path: "disk:/test/not_existing.mp4")
       { :error, "DiskNotFoundError", "Resource not found." }
   See: 
-    * https://yandex.ru/dev/disk/api/reference/delete-docpage/
+    * [Official docs](https://yandex.ru/dev/disk/api/reference/delete-docpage/)
   """
-  @spec destroy(YandexDisk.client(), Keyword.t()) :: {:ok, YandexDisk.url} | {:ok, :ok} | YandexDisk.error_result()
+  @spec destroy(YandexDisk.client(), Keyword.t()) ::
+          {:ok, YandexDisk.url()} | {:ok, :ok} | YandexDisk.error_result()
   def destroy(client, args) do
-    {path, args}  = Keyword.pop(args, :yandex_path)
-    query         = Keyword.merge(args, [path: path])
+    {path, args} = Keyword.pop(args, :yandex_path)
+    query = Keyword.merge(args, path: path)
 
     {:ok, %Tesla.Env{body: body}} = Tesla.delete(client, "/disk/resources", query: query)
-    case body do 
-      %{ "error" => error, "description" => description} -> 
+
+    case body do
+      %{"error" => error, "description" => description} ->
         {:error, error, description}
-      %{ "href" => href} ->
+
+      %{"href" => href} ->
         {:ok, href}
-      "" -> 
+
+      "" ->
         {:ok, :ok}
     end
   end
@@ -307,8 +337,9 @@ defmodule YandexDisk.File do
     {:ok, %Tesla.Env{body: body}} = Tesla.get(client, "/disk/resources/upload", query: query)
 
     case body do
-      %{"error" => error, "description" => description} -> 
+      %{"error" => error, "description" => description} ->
         {:error, error, description}
+
       info ->
         {:ok, info}
     end
@@ -317,10 +348,10 @@ defmodule YandexDisk.File do
   defp obtain_download_url(client, args) do
     {:ok, %Tesla.Env{body: body}} = Tesla.get(client, "disk/resources/download", query: args)
 
-    {:ok, %HTTPoison.Response{headers: headers}} = 
-      HTTPoison.request(:get, body["href"], "", [], [follow_redirect: false])
+    {:ok, %HTTPoison.Response{headers: headers}} =
+      HTTPoison.request(:get, body["href"], "", [], follow_redirect: false)
 
-    {_, location} = headers |> Enum.find(fn({x, _y}) -> x == "Location" end)
+    {_, location} = headers |> Enum.find(fn {x, _y} -> x == "Location" end)
     location
   end
 end

@@ -147,6 +147,9 @@ defmodule YandexDisk.File do
 
       {:ok, %HTTPoison.Response{status_code: 507}} ->
         {:error, "Insufficient Storage"}
+        
+      {:error, %HTTPoison.Error{id: nil, reason: :timeout}} ->
+        {:error, :timeout}
     end
   end
 

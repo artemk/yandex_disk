@@ -4,6 +4,7 @@ You should register your app to obtain ID and Password.
 Take a look at [hex docs](https://hexdocs.pm/yandex_disk/api-reference.html) for examples.
 
 ```
+Downstream.start()
 client = YandexDisk.Client.client(TOKEN)   
 YandexDisk.Folder.destroy(client, yandex_path: "disk:/test", permanently: true)
 ```
